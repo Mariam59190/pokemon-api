@@ -284,8 +284,22 @@
 
     async function request(url, options = {}) {
       try {
-        const response = await fetch(url, options);
-        const body = await response.json();
+        const response = await fetch(url, {
+          headers: {
+            Accept: "application/json",
+            ...(options.headers || {})
+          },
+          ...options
+        });
+
+        const text = await response.text();
+        let body;
+
+        try {
+          body = text ? JSON.parse(text) : {};
+        } catch (parseError) {
+          throw new Error(`Réponse invalide du serveur : ${text}`);
+        }
 
         if (!response.ok) {
           throw new Error(body.message || "Erreur API");
