@@ -1,71 +1,95 @@
-require('dotenv').config();
-const express = require('express');
-const pokemons = require('./db-pokemons');
-const helper = require('./helper');
+const express = require("express");
+const cors = require("cors");
+const path = require("path");
+const pokemons = require("./db-pokemons");
+const { success, error } = require("./helper");
 
 const app = express();
-const PORT = process.env.PORT || 3003;
+const PORT = 3003;
 
-// 🔥 obligatoire pour lire les JSON (POST)
+app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(__dirname)));
 
-// -------------------- ROUTES --------------------
+function normalizeText(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
 
-// Accueil
-app.get('/', (req, res) => {
-  res.send("Hello serveur !");
+function getNextPokemonId() {
+  return pokemons.length > 0
+    ? Math.max(...pokemons.map(pokemon => pokemon.id)) + 1
+    : 1;
+}
+
+app.get("/api/pokemons", (req, res) => {
+  const searchValue = normalizeText(req.query.search || "");
+  console.log(`GET /api/pokemons search=${searchValue}`);
+
+  let result = pokemons;
+  if (searchValue) {
+    result = pokemons.filter(pokemon => {
+      const name = normalizeText(pokemon.name);
+      const types = Array.isArray(pokemon.types)
+        ? pokemon.types.map(type => normalizeText(type)).join(" ")
+        : "";
+      return name.includes(searchValue) || types.includes(searchValue);
+    });
+  }
+
+  return res.json(success("Liste des pokemons", result));
 });
 
-// Liste des pokemons
-app.get('/api/pokemons', (req, res) => {
-  res.json(helper.success("Liste des pokemons", pokemons));
+app.get("/api/pokemons/:id", (req, res) => {
+  const id = Number(req.params.id);
+  console.log(`GET /api/pokemons/${id}`);
+
+  const pokemon = pokemons.find(item => item.id === id);
+  if (!pokemon) {
+    return res.status(404).json(error("Pokémon introuvable"));
+  }
+
+  return res.json(success("Pokémon trouvé", pokemon));
 });
 
-// Pokemon par ID
-app.get('/api/pokemons/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const pokemon = pokemons.find(p => p.id === id);
+app.post("/api/pokemons", (req, res) => {
+  const { name, image, picture, hp, cp, types } = req.body;
+  console.log("POST /api/pokemons", req.body);
 
-  res.json(helper.success("Pokemon trouvé", pokemon));
-});
+  const pictureUrl = (picture || image || "").trim();
+  if (!name || !pictureUrl) {
+    return res.status(400).json(error("Le nom et l'image sont obligatoires"));
+  }
 
-// 🔥 AJOUTER un pokemon (POST)
-app.post('/api/pokemons', (req, res) => {
-  const newPokemon = req.body;
+  const newPokemon = {
+    id: getNextPokemonId(),
+    name: name.trim(),
+    hp: Number(hp) || 20,
+    cp: Number(cp) || 5,
+    picture: pictureUrl,
+    types: Array.isArray(types) && types.length > 0 ? types : ["Normal"],
+    created: new Date()
+  };
 
   pokemons.push(newPokemon);
-
-  res.json(helper.success("Pokemon ajouté", newPokemon));
+  return res.status(201).json(success("Pokémon ajouté", newPokemon));
 });
 
-// -------------------------------------------------
+app.delete("/api/pokemons/:id", (req, res) => {
+  const id = Number(req.params.id);
+  console.log(`DELETE /api/pokemons/${id}`);
+
+  const index = pokemons.findIndex(item => item.id === id);
+  if (index === -1) {
+    return res.status(404).json(error("Pokémon introuvable"));
+  }
+
+  const removedPokemon = pokemons.splice(index, 1)[0];
+  return res.json(success("Pokémon supprimé", removedPokemon));
+});
 
 app.listen(PORT, () => {
-  console.log("Server listening on http://localhost:" + PORT);
-});
-app.delete('/api/pokemons/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-
-  const index = pokemons.findIndex(p => p.id === id);
-
-  if (index === -1) {
-    return res.json(helper.success("Pokemon introuvable", null));
-  }
-
-  const deleted = pokemons.splice(index, 1);
-
-  res.json(helper.success("Pokemon supprimé", deleted));
-});
-app.delete('/api/pokemons/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-
-  const index = pokemons.findIndex(p => p.id === id);
-
-  if (index === -1) {
-    return res.json(helper.success("Pokemon introuvable", null));
-  }
-
-  const deleted = pokemons.splice(index, 1);
-
-  res.json(helper.success("Pokemon supprimé", deleted));
+  console.log(`🔥 API Pokédex running on http://localhost:${PORT}`);
 });

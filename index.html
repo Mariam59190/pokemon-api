@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pokémon App</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #111216;
+      color: #f6f7fb;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 24px;
+      display: flex;
+      justify-content: center;
+      background: radial-gradient(circle at top, #3f51b5 0%, #111216 55%);
+    }
+
+    .app {
+      width: min(100%, 960px);
+    }
+
+    header {
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 3vw, 3rem);
+      letter-spacing: 0.04em;
+    }
+
+    p {
+      margin: 8px auto 0;
+      max-width: 720px;
+      color: #cbd5e1;
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 18px;
+      margin-bottom: 22px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.24);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .field-group {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      font-size: 0.95rem;
+      color: #d1d5db;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.08);
+      color: #f8fafc;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #7c3aed;
+      box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.15);
+    }
+
+    button {
+      border: none;
+      border-radius: 14px;
+      padding: 13px 18px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    .primary {
+      background: linear-gradient(135deg, #6d28d9, #3b82f6);
+      color: white;
+    }
+
+    .danger {
+      background: #ef4444;
+      color: white;
+    }
+
+    .message {
+      min-height: 24px;
+      margin-bottom: 16px;
+      color: #f8fafc;
+    }
+
+    .message.error {
+      color: #fca5a5;
+    }
+
+    .message.success {
+      color: #86efac;
+    }
+
+    #pokemon-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 18px;
+    }
+
+    .pokemon-card {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 16px;
+      min-height: 180px;
+      cursor: pointer;
+      align-items: center;
+      padding: 18px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      transition: transform 0.2s ease;
+    }
+
+    .pokemon-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(59, 130, 246, 0.28);
+    }
+
+    .pokemon-card img {
+      width: 100%;
+      max-width: 96px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.14);
+      padding: 12px;
+    }
+
+    .pokemon-info {
+      display: grid;
+      gap: 6px;
+    }
+
+    .pokemon-title {
+      margin: 0;
+      font-size: 1.1rem;
+      letter-spacing: 0.03em;
+    }
+
+    .pokemon-details {
+      margin-top: 12px;
+      padding: 14px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 14px;
+      display: none;
+      grid-column: 1 / -1;
+      color: #d1d5db;
+      line-height: 1.5;
+    }
+
+    .pokemon-details.open {
+      display: grid;
+    }
+
+    .pokemon-details span {
+      display: inline-block;
+      min-width: 120px;
+      font-weight: 600;
+      color: #f8fafc;
+    }
+
+    .pokemon-id {
+      color: #94a3b8;
+      font-size: 0.94rem;
+    }
+
+    .pokemon-stats,
+    .pokemon-types {
+      color: #cbd5e1;
+      font-size: 0.95rem;
+    }
+
+    .pokemon-image-url {
+      color: #cbd5e1;
+      word-break: break-all;
+      font-size: 0.86rem;
+    }
+
+    .pokemon-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .pokemon-card:hover {
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
+    }
+
+    @media (max-width: 680px) {
+      .pokemon-card {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+
+      .pokemon-actions {
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Pokémon App</h1>
+      <p>Liste des pokémons, ajout et suppression via backend Node.js / Express.</p>
+    </header>
+
+    <section class="panel">
+      <div class="message" id="message"></div>
+      <div class="field-group">
+        <label for="search">Recherche</label>
+        <input id="search" type="search" placeholder="Nom ou type du Pokémon" />
+      </div>
+      <div class="field-group">
+        <label for="name">Nom du Pokémon</label>
+        <input id="name" type="text" placeholder="Ex : Pikachu" />
+      </div>
+      <div class="field-group">
+        <label for="image">URL de l'image</label>
+        <input id="image" type="url" placeholder="https://..." />
+      </div>
+      <div class="form-row">
+        <button class="primary" id="search-button" type="button">Rechercher</button>
+        <button class="primary" id="load-button" type="button">Voir tout</button>
+        <button class="primary" id="add-button" type="button">Ajouter un Pokémon</button>
+      </div>
+    </section>
+
+    <section id="pokemon-list"></section>
+  </div>
+
+  <script>
+    const API_URL = "http://localhost:3003/api/pokemons";
+    const messageElement = document.getElementById("message");
+    const listElement = document.getElementById("pokemon-list");
+    const searchInput = document.getElementById("search");
+    const nameInput = document.getElementById("name");
+    const imageInput = document.getElementById("image");
+    const loadButton = document.getElementById("load-button");
+    const addButton = document.getElementById("add-button");
+    const searchButton = document.getElementById("search-button");
+
+    function showMessage(text, type = "success") {
+      messageElement.textContent = text;
+      messageElement.className = `message ${type}`;
+    }
+
+    function clearMessage() {
+      messageElement.textContent = "";
+      messageElement.className = "message";
+    }
+
+    async function request(url, options = {}) {
+      try {
+        const response = await fetch(url, options);
+        const body = await response.json();
+
+        if (!response.ok) {
+          throw new Error(body.message || "Erreur API");
+        }
+
+        return body;
+      } catch (err) {
+        throw new Error(err.message || "Impossible de contacter le serveur");
+      }
+    }
+
+    function createCard(pokemon) {
+      const card = document.createElement("article");
+      card.className = "pokemon-card";
+      card.dataset.id = pokemon.id;
+
+      card.innerHTML = `
+        <img src="${pokemon.picture || pokemon.image}" alt="${pokemon.name}" />
+        <div class="pokemon-info">
+          <h2 class="pokemon-title">${pokemon.name}</h2>
+          <div class="pokemon-id">ID : ${pokemon.id}</div>
+          <div class="pokemon-stats">HP : ${pokemon.hp ?? "?"} • CP : ${pokemon.cp ?? "?"}</div>
+          <div class="pokemon-types">Types : ${(pokemon.types || []).join(", ")}</div>
+          <div class="pokemon-image-url">${pokemon.picture || pokemon.image}</div>
+          <div class="pokemon-details">
+            <div><span>Nom :</span> ${pokemon.name}</div>
+            <div><span>HP :</span> ${pokemon.hp ?? "?"}</div>
+            <div><span>CP :</span> ${pokemon.cp ?? "?"}</div>
+            <div><span>Types :</span> ${(pokemon.types || []).join(", ")}</div>
+            <div><span>Créé le :</span> ${new Date(pokemon.created).toLocaleDateString("fr-FR")}</div>
+          </div>
+        </div>
+        <div class="pokemon-actions">
+          <button class="danger" type="button" data-id="${pokemon.id}">Supprimer</button>
+        </div>
+      `;
+
+      const deleteButton = card.querySelector("button");
+      const details = card.querySelector(".pokemon-details");
+
+      deleteButton.addEventListener("click", event => {
+        event.stopPropagation();
+        deletePokemon(pokemon.id);
+      });
+
+      card.addEventListener("click", event => {
+        if (event.target.tagName === "BUTTON" || event.target.tagName === "A") return;
+        details.classList.toggle("open");
+      });
+
+      return card;
+    }
+
+    async function loadPokemons(searchTerm = "") {
+      clearMessage();
+      listElement.innerHTML = "";
+      loadButton.textContent = searchTerm ? "Recherche..." : "Chargement...";
+
+      try {
+        const url = searchTerm ? `${API_URL}?search=${encodeURIComponent(searchTerm)}` : API_URL;
+        const { data } = await request(url);
+
+        if (data.length === 0) {
+          showMessage("Aucun Pokémon trouvé.", "error");
+          return;
+        }
+
+        data.forEach(pokemon => listElement.appendChild(createCard(pokemon)));
+        showMessage(`Chargé ${data.length} Pokémon(s).`, "success");
+      } catch (err) {
+        showMessage(err.message, "error");
+      } finally {
+        loadButton.textContent = "Voir tout";
+      }
+    }
+
+    async function searchPokemons() {
+      const searchTerm = document.getElementById("search").value.trim();
+      if (!searchTerm) {
+        showMessage("Veuillez indiquer un nom ou type à rechercher.", "error");
+        return;
+      }
+      await loadPokemons(searchTerm);
+    }
+
+    async function addPokemon() {
+      clearMessage();
+      const name = nameInput.value.trim();
+      const image = imageInput.value.trim();
+
+      if (!name || !image) {
+        showMessage("Veuillez remplir le nom et l'URL de l'image.", "error");
+        return;
+      }
+
+      addButton.textContent = "Ajout...";
+
+      try {
+        await request(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, picture: image })
+        });
+
+        nameInput.value = "";
+        imageInput.value = "";
+        await loadPokemons();
+        showMessage("Pokémon ajouté avec succès.", "success");
+      } catch (err) {
+        showMessage(err.message, "error");
+      } finally {
+        addButton.textContent = "Ajouter un Pokémon";
+      }
+    }
+
+    async function deletePokemon(id) {
+      clearMessage();
+      try {
+        await request(`${API_URL}/${id}`, { method: "DELETE" });
+        await loadPokemons();
+        showMessage("Pokémon supprimé.", "success");
+      } catch (err) {
+        showMessage(err.message, "error");
+      }
+    }
+
+    loadButton.addEventListener("click", () => {
+      searchInput.value = "";
+      loadPokemons();
+    });
+    addButton.addEventListener("click", addPokemon);
+    searchButton.addEventListener("click", searchPokemons);
+    searchInput.addEventListener("keydown", event => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        searchPokemons();
+      }
+    });
+    window.addEventListener("DOMContentLoaded", () => loadPokemons());
+  </script>
+</body>
+</html>

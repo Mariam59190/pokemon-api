@@ -1,17 +1,17 @@
 {
   "name": "pokemon-app",
   "version": "1.0.0",
-  "description": "",
+  "description": "Mini application fullstack Pokémon avec Node.js, Express et frontend HTML/CSS/JS.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js"
   },
-  "keywords": [],
+  "keywords": ["pokemon", "express", "frontend"],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "dotenv": "^17.4.2",
+    "cors": "^2.8.5",
     "express": "^5.2.1"
   }
 }
