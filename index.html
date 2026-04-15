@@ -234,22 +234,13 @@
   <div class="app">
     <header>
       <h1>Pokémon App</h1>
-      <p>Liste des pokémons, ajout et suppression via backend Node.js / Express.</p>
+      <p>Liste des pokémons avec affichage de détails sur clic.</p>
     </header>
 
     <section class="panel">
       <div class="message" id="message"></div>
-      <div class="field-group">
-        <label for="name">Nom du Pokémon</label>
-        <input id="name" type="text" placeholder="Ex : Pikachu" />
-      </div>
-      <div class="field-group">
-        <label for="image">URL de l'image</label>
-        <input id="image" type="url" placeholder="https://..." />
-      </div>
       <div class="form-row">
         <button class="primary" id="load-button" type="button">Voir tous les Pokémon</button>
-        <button class="primary" id="add-button" type="button">Ajouter un Pokémon</button>
       </div>
     </section>
 
@@ -257,13 +248,10 @@
   </div>
 
   <script>
-    const API_URL = "/api/pokemons";
+    const API_URL = "/pokemons.json";
     const messageElement = document.getElementById("message");
     const listElement = document.getElementById("pokemon-list");
-    const nameInput = document.getElementById("name");
-    const imageInput = document.getElementById("image");
     const loadButton = document.getElementById("load-button");
-    const addButton = document.getElementById("add-button");
 
     function showMessage(text, type = "success") {
       messageElement.textContent = text;
@@ -273,35 +261,6 @@
     function clearMessage() {
       messageElement.textContent = "";
       messageElement.className = "message";
-    }
-
-    async function request(url, options = {}) {
-      try {
-        const response = await fetch(url, {
-          headers: {
-            Accept: "application/json",
-            ...(options.headers || {})
-          },
-          ...options
-        });
-
-        const text = await response.text();
-        let body;
-
-        try {
-          body = text ? JSON.parse(text) : {};
-        } catch (parseError) {
-          throw new Error(`Réponse invalide du serveur : ${text}`);
-        }
-
-        if (!response.ok) {
-          throw new Error(body.message || "Erreur API");
-        }
-
-        return body;
-      } catch (err) {
-        throw new Error(err.message || "Impossible de contacter le serveur");
-      }
     }
 
     function createCard(pokemon) {
@@ -325,18 +284,9 @@
             <div><span>Créé le :</span> ${new Date(pokemon.created).toLocaleDateString("fr-FR")}</div>
           </div>
         </div>
-        <div class="pokemon-actions">
-          <button class="danger" type="button" data-id="${pokemon.id}">Supprimer</button>
-        </div>
       `;
 
-      const deleteButton = card.querySelector("button");
-      const details = card.querySelector(".pokemon-details");
-
-      deleteButton.addEventListener("click", event => {
-        event.stopPropagation();
-        deletePokemon(pokemon.id);
-      });
+        const details = card.querySelector(".pokemon-details");
 
       card.addEventListener("click", event => {
         if (event.target.tagName === "BUTTON" || event.target.tagName === "A") return;
@@ -352,8 +302,12 @@
       loadButton.textContent = "Chargement...";
 
       try {
-        const { data } = await request(API_URL);
+        const response = await fetch(API_URL);
+        if (!response.ok) {
+          throw new Error("Impossible de charger les pokémons.");
+        }
 
+        const data = await response.json();
         if (data.length === 0) {
           showMessage("Aucun Pokémon trouvé.", "error");
           return;
@@ -368,49 +322,7 @@
       }
     }
 
-    async function addPokemon() {
-      clearMessage();
-      const name = nameInput.value.trim();
-      const image = imageInput.value.trim();
-
-      if (!name || !image) {
-        showMessage("Veuillez remplir le nom et l'URL de l'image.", "error");
-        return;
-      }
-
-      addButton.textContent = "Ajout...";
-
-      try {
-        await request(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, picture: image })
-        });
-
-        nameInput.value = "";
-        imageInput.value = "";
-        await loadPokemons();
-        showMessage("Pokémon ajouté avec succès.", "success");
-      } catch (err) {
-        showMessage(err.message, "error");
-      } finally {
-        addButton.textContent = "Ajouter un Pokémon";
-      }
-    }
-
-    async function deletePokemon(id) {
-      clearMessage();
-      try {
-        await request(`${API_URL}/${id}`, { method: "DELETE" });
-        await loadPokemons();
-        showMessage("Pokémon supprimé.", "success");
-      } catch (err) {
-        showMessage(err.message, "error");
-      }
-    }
-
     loadButton.addEventListener("click", loadPokemons);
-    addButton.addEventListener("click", addPokemon);
     window.addEventListener("DOMContentLoaded", loadPokemons);
   </script>
 </body>
