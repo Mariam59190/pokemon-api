@@ -15,6 +15,8 @@ function getNextPokemonId() {
 }
 
 module.exports = async (req, res) => {
+  res.setHeader("Content-Type", "application/json");
+
   if (req.method === "GET") {
     const searchValue = normalizeText(req.query.search || "");
     let result = pokemons;
@@ -29,7 +31,7 @@ module.exports = async (req, res) => {
       });
     }
 
-    return res.status(200).json(success("Liste des pokemons", result));
+    return res.status(200).send(JSON.stringify(success("Liste des pokemons", result)));
   }
 
   if (req.method === "POST") {
