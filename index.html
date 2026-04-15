@@ -240,10 +240,6 @@
     <section class="panel">
       <div class="message" id="message"></div>
       <div class="field-group">
-        <label for="search">Recherche</label>
-        <input id="search" type="search" placeholder="Nom ou type du Pokémon" />
-      </div>
-      <div class="field-group">
         <label for="name">Nom du Pokémon</label>
         <input id="name" type="text" placeholder="Ex : Pikachu" />
       </div>
@@ -252,8 +248,7 @@
         <input id="image" type="url" placeholder="https://..." />
       </div>
       <div class="form-row">
-        <button class="primary" id="search-button" type="button">Rechercher</button>
-        <button class="primary" id="load-button" type="button">Voir tout</button>
+        <button class="primary" id="load-button" type="button">Voir tous les Pokémon</button>
         <button class="primary" id="add-button" type="button">Ajouter un Pokémon</button>
       </div>
     </section>
@@ -265,12 +260,10 @@
     const API_URL = "/api/pokemons";
     const messageElement = document.getElementById("message");
     const listElement = document.getElementById("pokemon-list");
-    const searchInput = document.getElementById("search");
     const nameInput = document.getElementById("name");
     const imageInput = document.getElementById("image");
     const loadButton = document.getElementById("load-button");
     const addButton = document.getElementById("add-button");
-    const searchButton = document.getElementById("search-button");
 
     function showMessage(text, type = "success") {
       messageElement.textContent = text;
@@ -353,14 +346,13 @@
       return card;
     }
 
-    async function loadPokemons(searchTerm = "") {
+    async function loadPokemons() {
       clearMessage();
       listElement.innerHTML = "";
-      loadButton.textContent = searchTerm ? "Recherche..." : "Chargement...";
+      loadButton.textContent = "Chargement...";
 
       try {
-        const url = searchTerm ? `${API_URL}?search=${encodeURIComponent(searchTerm)}` : API_URL;
-        const { data } = await request(url);
+        const { data } = await request(API_URL);
 
         if (data.length === 0) {
           showMessage("Aucun Pokémon trouvé.", "error");
@@ -372,17 +364,8 @@
       } catch (err) {
         showMessage(err.message, "error");
       } finally {
-        loadButton.textContent = "Voir tout";
+        loadButton.textContent = "Voir tous les Pokémon";
       }
-    }
-
-    async function searchPokemons() {
-      const searchTerm = document.getElementById("search").value.trim();
-      if (!searchTerm) {
-        showMessage("Veuillez indiquer un nom ou type à rechercher.", "error");
-        return;
-      }
-      await loadPokemons(searchTerm);
     }
 
     async function addPokemon() {
@@ -426,19 +409,9 @@
       }
     }
 
-    loadButton.addEventListener("click", () => {
-      searchInput.value = "";
-      loadPokemons();
-    });
+    loadButton.addEventListener("click", loadPokemons);
     addButton.addEventListener("click", addPokemon);
-    searchButton.addEventListener("click", searchPokemons);
-    searchInput.addEventListener("keydown", event => {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        searchPokemons();
-      }
-    });
-    window.addEventListener("DOMContentLoaded", () => loadPokemons());
+    window.addEventListener("DOMContentLoaded", loadPokemons);
   </script>
 </body>
 </html>
